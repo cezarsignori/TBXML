@@ -47,6 +47,7 @@ typedef struct _TBXMLAttribute {
 	char * name;
 	char * value;
 	struct _TBXMLAttribute * next;
+	NSStringEncoding encoding;
 } TBXMLAttribute;
 
 typedef struct _TBXMLElement {
@@ -63,6 +64,7 @@ typedef struct _TBXMLElement {
 	struct _TBXMLElement * nextSibling;
 	struct _TBXMLElement * previousSibling;
 	
+	NSStringEncoding encoding;
 } TBXMLElement;
 
 typedef struct _TBXMLElementBuffer {
@@ -93,6 +95,8 @@ typedef struct _TBXMLAttributeBuffer {
 	
 	char * bytes;
 	long bytesLength;
+	
+	NSDictionary *encodings;
 }
 
 @property (nonatomic, readonly) TBXMLElement * rootXMLElement;

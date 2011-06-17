@@ -81,7 +81,23 @@
 		
 		bytes = 0;
 		bytesLength = 0;
+		
+		encodings = [[NSDictionary alloc] initWithObjectsAndKeys:
+					 [NSNumber numberWithInt:NSUTF8StringEncoding], @"UTF-8",
+					 [NSNumber numberWithInt:NSUTF16StringEncoding], @"UTF-16",
+					 [NSNumber numberWithInt:NSISOLatin1StringEncoding], @"ISO-8859-1",
+					 [NSNumber numberWithInt:NSISOLatin2StringEncoding], @"ISO-8859-2",
+					 [NSNumber numberWithInt:NSISO2022JPStringEncoding], @"ISO-2022-JP",
+					 [NSNumber numberWithInt:NSShiftJISStringEncoding], @"Shift_JIS",
+					 [NSNumber numberWithInt:NSJapaneseEUCStringEncoding], @"EUC-JP",
+					 [NSNumber numberWithInt:NSWindowsCP1250StringEncoding], @"windows-1250",
+					 [NSNumber numberWithInt:NSWindowsCP1251StringEncoding], @"windows-1251",
+					 [NSNumber numberWithInt:NSWindowsCP1252StringEncoding], @"windows-1252",
+					 [NSNumber numberWithInt:NSWindowsCP1253StringEncoding], @"windows-1253",
+					 [NSNumber numberWithInt:NSWindowsCP1254StringEncoding], @"windows-1254",
+					 nil];
 	}
+	
 	return self;
 }
 
@@ -161,22 +177,22 @@
 
 + (NSString*) elementName:(TBXMLElement*)aXMLElement {
 	if (nil == aXMLElement->name) return @"";
-	return [NSString stringWithCString:&aXMLElement->name[0] encoding:NSUTF8StringEncoding];
+	return [NSString stringWithCString:&aXMLElement->name[0] encoding:aXMLElement->encoding];
 }
 
 + (NSString*) attributeName:(TBXMLAttribute*)aXMLAttribute {
 	if (nil == aXMLAttribute->name) return @"";
-	return [NSString stringWithCString:&aXMLAttribute->name[0] encoding:NSUTF8StringEncoding];
+	return [NSString stringWithCString:&aXMLAttribute->name[0] encoding:aXMLAttribute->encoding];
 }
 
 + (NSString*) attributeValue:(TBXMLAttribute*)aXMLAttribute {
 	if (nil == aXMLAttribute->value) return @"";
-	return [NSString stringWithCString:&aXMLAttribute->value[0] encoding:NSUTF8StringEncoding];
+	return [NSString stringWithCString:&aXMLAttribute->value[0] encoding:aXMLAttribute->encoding];
 }
 
 + (NSString*) textForElement:(TBXMLElement*)aXMLElement {
 	if (nil == aXMLElement->text) return @"";
-	return [NSString stringWithCString:&aXMLElement->text[0] encoding:NSUTF8StringEncoding];
+	return [NSString stringWithCString:&aXMLElement->text[0] encoding:aXMLElement->encoding];
 }
 
 + (NSString*) valueOfAttributeNamed:(NSString *)aName forElement:(TBXMLElement*)aXMLElement {
@@ -185,7 +201,7 @@
 	TBXMLAttribute * attribute = aXMLElement->firstAttribute;
 	while (attribute) {
 		if (strlen(attribute->name) == strlen(name) && memcmp(attribute->name,name,strlen(name)) == 0) {
-			value = [NSString stringWithCString:&attribute->value[0] encoding:NSUTF8StringEncoding];
+			value = [NSString stringWithCString:&attribute->value[0] encoding:aXMLElement->encoding];
 			break;
 		}
 		attribute = attribute->next;
@@ -253,6 +269,9 @@
 	
 	// set parent element to nil
 	TBXMLElement * parentXMLElement = nil;
+	
+	// set default encoding to UTF-8
+	NSStringEncoding encoding = NSUTF8StringEncoding;
 	
 	// find next element start
 	while ((elementStart = strstr(elementStart,"<"))) {
@@ -326,6 +345,28 @@
 		// get element name start
 		char * elementNameStart = elementStart+1;
 		
+		// detect xml encoding
+		if (strncmp(elementNameStart, "?xml", 4) == 0) {
+			char *encodingStart, *encodingEnd;
+			
+			// find encoding attribute declaration
+			if ((encodingStart = strstr(elementNameStart, "encoding="))) {
+				encodingStart = strchr(encodingStart, '"');
+			}
+			if (encodingStart++) {
+				if ((encodingEnd = strchr(encodingStart, '"'))) {
+					// null terminate encoding string
+					*encodingEnd = 0;
+					
+					// fetch encoding from mapping
+					NSNumber *encodingsValue = [encodings objectForKey:[NSString stringWithCString:encodingStart encoding:encoding]];
+					if (encodingsValue) {
+						encoding = [encodingsValue intValue];
+					}
+				}
+			}
+		}
+		
 		// ignore tags that start with ? or ! unless cdata "<![CDATA"
 		if (*elementNameStart == '?' || (*elementNameStart == '!' && isCDATA != 0)) {
 			elementStart = elementEnd+1;
@@ -369,8 +410,9 @@
 		// create new xmlElement struct
 		TBXMLElement * xmlElement = [self nextAvailableElement];
 		
-		// set element name
+		// set element name and encoding
 		xmlElement->name = elementNameStart;
+		xmlElement->encoding = encoding;
 		
 		// if there is a parent element
 		if (parentXMLElement) {
@@ -478,9 +520,10 @@
 							// set last attribute to this attribute
 							lastXMLAttribute = xmlAttribute;
 
-							// set attribute name & value
+							// set attribute name, value and encoding
 							xmlAttribute->name = name;
 							xmlAttribute->value = value;
+							xmlAttribute->encoding = encoding;
 							
 							// clear name and value pointers
 							name = nil;
@@ -551,6 +594,8 @@
 			currentAttributeBuffer = 0;
 		}
 	}
+	
+	[encodings release];
 	
 	[super dealloc];
 }
