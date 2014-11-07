@@ -114,7 +114,7 @@
 		
 		// copy string to byte array
 		bytesLength = [aXMLString lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-		bytes = malloc(bytesLength+1);
+		bytes = (char *)malloc(bytesLength+1);
 		[aXMLString getBytes:bytes maxLength:bytesLength usedLength:0 encoding:NSUTF8StringEncoding options:NSStringEncodingConversionAllowLossy range:NSMakeRange(0, bytesLength) remainingRange:nil];
 		
 		// set null terminator at end of byte array
@@ -248,7 +248,7 @@
 - (void)decodeData:(NSData*)data {
 	// copy data to byte array
 	bytesLength = [data length];
-	bytes = malloc(bytesLength+1);
+	bytes = (char *)malloc(bytesLength+1);
 	[data getBytes:bytes length:bytesLength];
 	
 	// set null terminator at end of byte array
@@ -604,12 +604,12 @@
 	currentElement++;
 	
 	if (!currentElementBuffer) {
-		currentElementBuffer = calloc(1, sizeof(TBXMLElementBuffer));
+		currentElementBuffer = (TBXMLElementBuffer *)calloc(1, sizeof(TBXMLElementBuffer));
 		currentElementBuffer->elements = (TBXMLElement*)calloc(1,sizeof(TBXMLElement)*MAX_ELEMENTS);
 		currentElement = 0;
 		rootXMLElement = &currentElementBuffer->elements[currentElement];
 	} else if (currentElement >= MAX_ELEMENTS) {
-		currentElementBuffer->next = calloc(1, sizeof(TBXMLElementBuffer));
+		currentElementBuffer->next = (TBXMLElementBuffer *)calloc(1, sizeof(TBXMLElementBuffer));
 		currentElementBuffer->next->previous = currentElementBuffer;
 		currentElementBuffer = currentElementBuffer->next;
 		currentElementBuffer->elements = (TBXMLElement*)calloc(1,sizeof(TBXMLElement)*MAX_ELEMENTS);
@@ -623,11 +623,11 @@
 	currentAttribute++;
 	
 	if (!currentAttributeBuffer) {
-		currentAttributeBuffer = calloc(1, sizeof(TBXMLAttributeBuffer));
+		currentAttributeBuffer = (TBXMLAttributeBuffer *)calloc(1, sizeof(TBXMLAttributeBuffer));
 		currentAttributeBuffer->attributes = (TBXMLAttribute*)calloc(MAX_ATTRIBUTES,sizeof(TBXMLAttribute));
 		currentAttribute = 0;
 	} else if (currentAttribute >= MAX_ATTRIBUTES) {
-		currentAttributeBuffer->next = calloc(1, sizeof(TBXMLAttributeBuffer));
+		currentAttributeBuffer->next = (TBXMLAttributeBuffer *)calloc(1, sizeof(TBXMLAttributeBuffer));
 		currentAttributeBuffer->next->previous = currentAttributeBuffer;
 		currentAttributeBuffer = currentAttributeBuffer->next;
 		currentAttributeBuffer->attributes = (TBXMLAttribute*)calloc(MAX_ATTRIBUTES,sizeof(TBXMLAttribute));

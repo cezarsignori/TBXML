@@ -92,7 +92,7 @@ static char encodingTable[64] = {
         
         // Convert the string to ASCII data.
         base64Data = [string dataUsingEncoding:NSASCIIStringEncoding];
-        base64Bytes = [base64Data bytes];
+        base64Bytes = (const unsigned char *)[base64Data bytes];
         mutableData = [NSMutableData dataWithCapacity:[base64Data length]];
         lentext = [base64Data length];
         
@@ -149,7 +149,7 @@ static char encodingTable[64] = {
 }
 
 - (NSString *) base64EncodingWithLineLength:(unsigned int) lineLength {
-    const unsigned char    *bytes = [self bytes];
+    const unsigned char *bytes = (const unsigned char *)[self bytes];
     NSMutableString *result = [NSMutableString stringWithCapacity:[self length]];
     unsigned long ixtext = 0;
     unsigned long lentext = [self length];
@@ -249,7 +249,7 @@ static char encodingTable[64] = {
 		if (strm.total_out >= [compressed length])
 			[compressed increaseLengthBy: 16384];
 		
-		strm.next_out = [compressed mutableBytes] + strm.total_out;
+		strm.next_out = ((Bytef *)[compressed mutableBytes]) + strm.total_out;
 		strm.avail_out = [compressed length] - strm.total_out;
 		
 		deflate(&strm, Z_FINISH);  
@@ -286,7 +286,7 @@ static char encodingTable[64] = {
 		// Make sure we have enough room and reset the lengths.
 		if (strm.total_out >= [decompressed length])
 			[decompressed increaseLengthBy: half_length];
-		strm.next_out = [decompressed mutableBytes] + strm.total_out;
+		strm.next_out = (Bytef *)[decompressed mutableBytes] + strm.total_out;
 		strm.avail_out = [decompressed length] - strm.total_out;
 		
 		// Inflate another chunk.
